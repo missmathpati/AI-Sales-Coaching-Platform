@@ -1,6 +1,10 @@
 # AI Sales Coaching System (LLM-Based Call Auditing)
 
-Built a production AI system that generates structured coaching reports from sales call transcripts by replicating an expert coach’s evaluation process.
+Built a production AI system to scale how elite sales coaches audit calls.
+
+Sales coaches typically spend 45–90 minutes manually reviewing a single call and producing structured feedback covering strengths, gaps, and specific tactical fixes. This process is high-quality but does not scale.
+
+To address this, I co-led the development of a two-stage LLM system that converts raw call transcripts into structured audit reports in under ~2 minutes, replicating a coach’s evaluation process across calls.
 
 The system is designed as a **two-stage LLM pipeline** deployed via serverless microservices.
 
@@ -202,11 +206,15 @@ The system is composed of independent services:
 
 ## 10. My Contribution
 
-* Designed the **two-stage LLM pipeline (notes → report)**
-* Built logic for **call notes structure and generation flow**
-* Worked on **context construction between stages**
-* Contributed to **multi-call aggregation logic**
-* Integrated AI services into a production workflow
+* Co-led the design and development of the end-to-end AI system
+* Designed the **two-stage LLM pipeline (call notes → report generation)** that separates signal extraction from judgment
+* Built and iterated on the **Call Notes and AI Report services**, including prompt design and structured output generation
+* Defined how **Stage 2 consumes structured notes instead of raw transcripts** to improve reasoning consistency and reduce noise
+* Implemented logic for **multi-call aggregation**, enabling pattern detection across conversations
+* Acted in a **forward-deployed capacity**, leading client discussions and translating real coaching requirements into system design decisions
+* Worked closely with stakeholders to **align outputs with real coaching expectations**, iterating based on feedback
+* Validated and refined outputs to ensure **consistency, actionability, and alignment with expert-written reports**
+
 
 ---
 
