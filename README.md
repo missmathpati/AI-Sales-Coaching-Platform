@@ -1,170 +1,116 @@
-# Cloning a Sales Coach’s Decision-Making with Production GenAI
+# AI Sales Coaching System (LLM-Based Call Auditing)
 
-## TL;DR
+Built a production AI system that generates structured coaching reports from sales call transcripts by replicating an expert coach’s evaluation process.
 
-Built a production AI system that replicates how an elite sales coach evaluates calls.
-
-Not just summarizing transcripts, but:
-
-* identifying high-signal moments
-* judging rep behavior
-* generating structured, tactical feedback
-* aggregating patterns across multiple calls
-
-Designed as a **multi-stage LLM system** deployed via serverless microservices.
+The system is designed as a **two-stage LLM pipeline** deployed via serverless microservices.
 
 ---
 
-## Problem
+## System Flow
 
-Elite sales coaches spend 45–90 minutes reviewing a single call and producing structured audit reports with:
-
-* strengths
-* areas of improvement
-* exact tactical fixes
-
-This process is:
-
-* slow
-* inconsistent
-* impossible to scale
-
-### Goal
-
-Replicate a specific coach’s:
-
-* reasoning process
-* structure
-* tone
-* decision-making
-
-…using LLMs in a production system.
-
----
-
-## System Overview
-
-This is not a “generate summary” problem.
-
-It is a **multi-step reasoning system**:
-
-```id="sys1"
-Transcript → Observation → Interpretation → Judgment → Recommendation
+```id="flow1"
+Call Input → Transcription → Call Notes → AI Report → Output
 ```
 
-A single LLM call fails at this.
+---
 
-So the system was decomposed.
+## 1. Data Ingestion
+
+Calls enter the system in two ways:
+
+* Audio / video upload
+* External call platform links (abstracted ingestion layer)
+
+For all inputs:
+
+* transcripts are generated or provided
+* transcripts are normalized into a consistent format
+
+**Output:**
+
+* timestamped transcript
+* speaker-separated text
 
 ---
 
-## AI Pipeline
+## 2. Transcription Layer
 
-### Stage 1 — Call Notes (Local Reasoning)
+**Service:** Transcription microservice
+**Model:** Deepgram
 
-**Input:** Transcript
-**Output:** Structured, timestamped insights
+Responsibilities:
 
-* Extract what actually happened
-* Tag by category (Discovery, Demo, etc.)
-* Stay grounded in transcript
+* convert audio/video into text
+* perform speaker diarization
+* generate timestamped transcript
 
----
 
-### Stage 2 — Report Generation (Global Reasoning)
-
-**Input:** Notes (single or multiple calls)
-**Output:** Structured audit report
-
-* Identify patterns
-* Prioritize issues
-* Generate actionable fixes
 
 ---
 
-### Key Insight
+## 3. Stage 1 — Call Notes Generation
 
-> Separate **“what happened”** from **“what it means”**
+**Service:** Call Notes microservice
+**Model:** GPT-4.1
+**Latency:** ~15–30 seconds
 
-This significantly improved:
+This stage converts the transcript into **structured coaching notes**.
 
-* reasoning quality
-* structure consistency
-* reliability
+Each note includes:
 
----
+* timestamp
+* transcript snippet
+* coaching observation
+* category tags
 
-## Architecture
+**Example:**
 
-* Frontend: Next.js (SSE streaming)
-* Backend: FastAPI microservices
-* Deployment: AWS Lambda (serverless)
-* Database: Supabase (Postgres + storage)
-* AI Models:
+```id="n1"
+02:15 → Asked generic question → weak discovery → [Discovery, AOI]
+05:30 → Jumped into demo early → [Demo, AOI]
+```
 
-  * GPT-4.1 → note generation
-  * GPT-4o → report synthesis
-  * Deepgram → transcription
+Characteristics:
 
----
+* grounded in transcript
+* no aggregation
+* captures all relevant signals
 
-## Context Engineering
+**Output:**
 
-### Problem
-
-Raw transcripts are:
-
-* noisy
-* long
-* inconsistent
-
-### Solution
-
-Use **structured notes as intermediate representation**
-
-* compress signal
-* reduce token usage
-* improve reasoning quality
-
-> Notes act as a reasoning scaffold for the report stage.
+* list of structured notes stored in database
 
 ---
 
-## Multi-Call Reasoning
+## 4. Stage 2 — AI Report Generation
 
-Single-call insights are unreliable.
+**Service:** AI Report microservice
+**Model:** GPT-4o
+**Latency:** ~60–120 seconds
 
-The system:
+This stage generates the final **structured audit report**.
 
-* aggregates notes across calls
-* tracks frequency of patterns
-* enforces consistency
+**Input:**
 
-Example:
+* notes from Stage 1
+* (optional) notes from multiple calls
 
-> Issue must appear in multiple calls to be included
+**Processing:**
 
-Prevents:
+* prioritize key issues
+* group related observations
+* generate actionable recommendations
 
-* overfitting to one call
-* contradictory outputs
+**Output:**
 
----
+* structured report (XML-style schema)
 
-## Output Design
+**Example:**
 
-Reports are generated in a **strict structured format** to ensure:
-
-* consistency
-* parseability
-* downstream analytics
-
-Example:
-
-```xml id="xml1"
+```xml id="r1"
 <Fix>
   <Category>Discovery</Category>
-  <Problem>Weak qualification</Problem>
+  <Problem>Insufficient qualification</Problem>
   <Impact>Low relevance demo</Impact>
   <Fix>Ask targeted diagnostic questions</Fix>
 </Fix>
@@ -172,143 +118,98 @@ Example:
 
 ---
 
-## Prompting Strategy (Abstracted)
+## 5. Multi-Call Aggregation
 
-* Modular prompt components (persona, task, output schema)
-* Few-shot examples to anchor style
-* Structured output enforcement
+For representative-level reports:
 
-> Exact prompt structures and templates are proprietary.
+* notes from multiple calls are combined
+* patterns are identified across calls
+* issues must appear consistently to be included
 
----
+This enables:
 
-## Microservices
-
-### 1. Transcription
-
-* Converts audio/video → speaker-separated transcripts
-
-### 2. Call Notes Service
-
-* Generates structured coaching notes
-* ~15–30s latency
-
-### 3. Report Generation Service
-
-* Produces full audit report + analytics
-* ~60–120s latency
-
-### 4. Feedback System (Conceptual Contribution)
-
-* Uses user ratings to improve future outputs
-* Designed as a knowledge-driven update loop
+* pattern detection
+* rep-level evaluation instead of single-call feedback
 
 ---
 
-## Engineering Challenges
+## 6. Context Construction
 
-### 1. Matching Human Coaching Style
+Stage 2 operates primarily on:
 
-Generic prompts produced generic feedback.
+* structured notes (not raw transcript)
 
-Solution:
+This reduces:
 
-* structured reasoning pipeline
-* example-driven alignment
-* iterative refinement
-
----
-
-### 2. Reliable Structured Outputs
-
-LLMs frequently break schemas.
-
-Solution:
-
-* strict output specification
-* validation + error handling
-* decomposition into smaller tasks
+* noise from conversation
+* context size
+* inconsistency in reasoning
 
 ---
 
-### 3. Multi-Call Consistency
+## 7. Output Layer
 
-Risk of contradictions across calls.
+Reports are:
 
-Solution:
+* stored in database
+* rendered in UI
+* exported to external tools (e.g., Notion)
 
-* aggregation logic
-* frequency thresholds
-* constrained reasoning
+Additional outputs include:
 
----
-
-### 4. Long Context Handling
-
-Full transcripts degrade performance.
-
-Solution:
-
-* intermediate note representation
-* signal-first context design
+* issue distribution (by category)
+* common mistake patterns
 
 ---
 
-## Tradeoffs
+## 8. Microservices
 
-| Decision        | Choice        | Why                               |
-| --------------- | ------------- | --------------------------------- |
-| Pipeline design | Multi-stage   | Improves reasoning reliability    |
-| Context         | Notes-focused | Better signal than raw transcript |
-| Output format   | Structured    | Enables validation + analytics    |
-| Infra           | Serverless    | Scalable, event-driven            |
+The system is composed of independent services:
 
----
+### Transcription Service
 
-## Results
+* audio/video → transcript
 
-* ~82% alignment with expert-written reports
-* ~60% reduction in manual review time
-* Significant improvement in consistency of feedback
+### Call Notes Service
 
----
+* transcript → structured notes
 
-## My Contribution
+### AI Report Service
 
-* Designed the **multi-stage LLM pipeline (notes → report)**
-* Built core logic for **context construction and reasoning flow**
-* Worked on **prompt design and structured output strategy**
-* Contributed to **feedback loop design (conceptual)**
-* Collaborated on integrating AI services into a production system
+* notes → structured report
 
 ---
 
-## Key Learnings
+## 9. System Architecture
 
-* LLM performance is driven more by **system design than prompts**
-* Intermediate representations dramatically improve reasoning
-* Structured outputs are essential for production reliability
-* Multi-stage pipelines outperform single-pass generation
+* **Frontend:** Next.js
+* **Backend:** FastAPI
+* **Deployment:** AWS Lambda
+* **Database:** Supabase (Postgres + storage)
 
----
+### AI Stack
 
-## Note
-
-This is a **sanitized case study** of a production system.
-
-* No proprietary code or data is included
-* Prompt templates, schemas, and internal implementations are abstracted
+* GPT-4.1 → notes
+* GPT-4o → report
+* Deepgram → transcription
 
 ---
 
-## Final Thought
+## 10. My Contribution
 
-This project shifted my perspective from:
+* Designed the **two-stage LLM pipeline (notes → report)**
+* Built logic for **call notes structure and generation flow**
+* Worked on **context construction between stages**
+* Contributed to **multi-call aggregation logic**
+* Integrated AI services into a production workflow
 
-> “using LLMs”
+---
 
-to
+## 11. Notes
 
-> “designing systems that think before generating”
+This is a **sanitized system overview**.
+
+* No proprietary code or prompts are included
+* Implementation details are abstracted
 
 ---
