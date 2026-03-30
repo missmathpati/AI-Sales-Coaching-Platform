@@ -9,8 +9,9 @@ To address this, I co-led the development of a two-stage LLM system that convert
 The system is designed as a **two-stage LLM pipeline** deployed via serverless microservices.
 
 ## System Architecture 
+
 <p align="center">
-  <img src="Architecture.png)" alt="System Architecture" width="700"/>
+  <img src="Architecture.png" alt="System Architecture" width="800"/>
 </p>
 
 ---
