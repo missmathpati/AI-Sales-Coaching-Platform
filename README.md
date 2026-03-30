@@ -10,7 +10,7 @@ The system is designed as a **two-stage LLM pipeline** deployed via serverless m
 
 ## System Architecture 
 <p align="center">
-  <img src="[/architecture.png](https://github.com/missmathpati/AI-Sales-Coaching-Platform/blob/main/Architecture.png)" alt="System Architecture" width="700"/>
+  <img src="Architecture.png)" alt="System Architecture" width="700"/>
 </p>
 
 ---
