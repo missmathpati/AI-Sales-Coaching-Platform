@@ -6,7 +6,6 @@ The system is designed as a **two-stage LLM pipeline** deployed via serverless m
 
 ## System Architecture
 
-```mermaid
 flowchart LR
     A["Call Input<br/>Audio / Video / Link"] --> B["Transcription Service<br/>Deepgram"]
     B --> C["Transcript<br/>Timestamp + Speakers"]
