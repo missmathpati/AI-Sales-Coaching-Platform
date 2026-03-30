@@ -8,6 +8,11 @@ To address this, I co-led the development of a two-stage LLM system that convert
 
 The system is designed as a **two-stage LLM pipeline** deployed via serverless microservices.
 
+## System Architecture 
+<p align="center">
+  <img src="[/architecture.png](https://github.com/missmathpati/AI-Sales-Coaching-Platform/blob/main/Architecture.png)" alt="System Architecture" width="700"/>
+</p>
+
 ---
 
 ## System Flow
