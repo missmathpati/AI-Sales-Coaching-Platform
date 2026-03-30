@@ -4,6 +4,23 @@ Built a production AI system that generates structured coaching reports from sal
 
 The system is designed as a **two-stage LLM pipeline** deployed via serverless microservices.
 
+## System Architecture
+
+```mermaid
+flowchart LR
+    A[Call Input\nAudio / Video / Link] --> B[Transcription Service\nDeepgram]
+    B --> C[Transcript\nTimestamp + Speakers]
+
+    C --> D[Stage 1: Call Notes\nGPT-4.1]
+    D --> E[Structured Notes\nTimestamp + Tags]
+
+    E --> F[Stage 2: AI Report\nGPT-4o]
+    F --> G[Structured Report\nXML Schema]
+
+    G --> H[Storage\nSupabase]
+    G --> I[UI / Dashboard]
+    G --> J[Export\nNotion / Analytics]
+
 ---
 
 ## System Flow
