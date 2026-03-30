@@ -20,212 +20,159 @@ flowchart LR
     G --> H["Storage<br/>Supabase"]
     G --> I["UI / Dashboard"]
     G --> J["Export<br/>Analytics"]
----
+System Flow
 
-## System Flow
-
-```id="flow1"
 Call Input → Transcription → Call Notes → AI Report → Output
-```
 
----
-
-## 1. Data Ingestion
+1. Data Ingestion
 
 Calls enter the system in two ways:
 
-* Audio / video upload
-* External call platform links (abstracted ingestion layer)
+Audio / video upload
+External call platform links (abstracted ingestion layer)
 
 For all inputs:
 
-* transcripts are generated or provided
-* transcripts are normalized into a consistent format
+transcripts are generated or provided
+transcripts are normalized into a consistent format
 
-**Output:**
+Output:
 
-* timestamped transcript
-* speaker-separated text
+timestamped transcript
+speaker-separated text
+2. Transcription Layer
 
----
-
-## 2. Transcription Layer
-
-**Service:** Transcription microservice
-**Model:** Deepgram
+Service: Transcription microservice
+Model: Deepgram
 
 Responsibilities:
 
-* convert audio/video into text
-* perform speaker diarization
-* generate timestamped transcript
+convert audio/video into text
+perform speaker diarization
+generate timestamped transcript
+3. Stage 1 — Call Notes Generation
 
+Service: Call Notes microservice
+Model: GPT-4.1
+Latency: ~15–30 seconds
 
-
----
-
-## 3. Stage 1 — Call Notes Generation
-
-**Service:** Call Notes microservice
-**Model:** GPT-4.1
-**Latency:** ~15–30 seconds
-
-This stage converts the transcript into **structured coaching notes**.
+This stage converts the transcript into structured coaching notes.
 
 Each note includes:
 
-* timestamp
-* transcript snippet
-* coaching observation
-* category tags
+timestamp
+transcript snippet
+coaching observation
+category tags
 
-**Example:**
+Example:
 
-```id="n1"
 02:15 → Asked generic question → weak discovery → [Discovery, AOI]
 05:30 → Jumped into demo early → [Demo, AOI]
-```
 
 Characteristics:
 
-* grounded in transcript
-* no aggregation
-* captures all relevant signals
+grounded in transcript
+no aggregation
+captures all relevant signals
 
-**Output:**
+Output:
 
-* list of structured notes stored in database
+list of structured notes stored in database
+4. Stage 2 — AI Report Generation
 
----
+Service: AI Report microservice
+Model: GPT-4o
+Latency: ~60–120 seconds
 
-## 4. Stage 2 — AI Report Generation
+This stage generates the final structured audit report.
 
-**Service:** AI Report microservice
-**Model:** GPT-4o
-**Latency:** ~60–120 seconds
+Input:
 
-This stage generates the final **structured audit report**.
+notes from Stage 1
+optional notes from multiple calls
 
-**Input:**
+Processing:
 
-* notes from Stage 1
-* (optional) notes from multiple calls
+prioritize key issues
+group related observations
+generate actionable recommendations
 
-**Processing:**
+Output:
 
-* prioritize key issues
-* group related observations
-* generate actionable recommendations
+structured report (XML-style schema)
 
-**Output:**
+Example:
 
-* structured report (XML-style schema)
-
-**Example:**
-
-```xml id="r1"
 <Fix>
   <Category>Discovery</Category>
   <Problem>Insufficient qualification</Problem>
   <Impact>Low relevance demo</Impact>
   <Fix>Ask targeted diagnostic questions</Fix>
 </Fix>
-```
-
----
-
-## 5. Multi-Call Aggregation
+5. Multi-Call Aggregation
 
 For representative-level reports:
 
-* notes from multiple calls are combined
-* patterns are identified across calls
-* issues must appear consistently to be included
+notes from multiple calls are combined
+patterns are identified across calls
+issues must appear consistently to be included
 
 This enables:
 
-* pattern detection
-* rep-level evaluation instead of single-call feedback
-
----
-
-## 6. Context Construction
+pattern detection
+rep-level evaluation instead of single-call feedback
+6. Context Construction
 
 Stage 2 operates primarily on:
 
-* structured notes (not raw transcript)
+structured notes rather than raw transcript
 
 This reduces:
 
-* noise from conversation
-* context size
-* inconsistency in reasoning
-
----
-
-## 7. Output Layer
+noise from conversation
+context size
+inconsistency in reasoning
+7. Output Layer
 
 Reports are:
 
-* stored in database
-* rendered in UI
-* exported to external tools (e.g., Notion)
+stored in database
+rendered in UI
+exported to external tools
 
 Additional outputs include:
 
-* issue distribution (by category)
-* common mistake patterns
-
----
-
-## 8. Microservices
+issue distribution by category
+common mistake patterns
+8. Microservices
 
 The system is composed of independent services:
 
-### Transcription Service
+Transcription Service
+audio/video → transcript
+Call Notes Service
+transcript → structured notes
+AI Report Service
+notes → structured report
+9. System Stack
+Frontend: Next.js
+Backend: FastAPI
+Deployment: AWS Lambda
+Database: Supabase (Postgres + storage)
+AI Stack
+GPT-4.1 → notes
+GPT-4o → report
+Deepgram → transcription
+10. My Contribution
+Designed the two-stage LLM pipeline (notes → report)
+Built logic for call notes structure and generation flow
+Worked on context construction between stages
+Contributed to multi-call aggregation logic
+Integrated AI services into a production workflow
+11. Notes
 
-* audio/video → transcript
+This is a sanitized system overview.
 
-### Call Notes Service
-
-* transcript → structured notes
-
-### AI Report Service
-
-* notes → structured report
-
----
-
-## 9. System Architecture
-
-* **Frontend:** Next.js
-* **Backend:** FastAPI
-* **Deployment:** AWS Lambda
-* **Database:** Supabase (Postgres + storage)
-
-### AI Stack
-
-* GPT-4.1 → notes
-* GPT-4o → report
-* Deepgram → transcription
-
----
-
-## 10. My Contribution
-
-* Designed the **two-stage LLM pipeline (notes → report)**
-* Built logic for **call notes structure and generation flow**
-* Worked on **context construction between stages**
-* Contributed to **multi-call aggregation logic**
-* Integrated AI services into a production workflow
-
----
-
-## 11. Notes
-
-This is a **sanitized system overview**.
-
-* No proprietary code or prompts are included
-* Implementation details are abstracted
-
----
+No proprietary code or prompts are included
+Implementation details are abstracted
