@@ -6,19 +6,6 @@ The system is designed as a **two-stage LLM pipeline** deployed via serverless m
 
 ## System Architecture
 
-flowchart LR
-    A["Call Input<br/>Audio / Video / Link"] --> B["Transcription Service<br/>Deepgram"]
-    B --> C["Transcript<br/>Timestamp + Speakers"]
-
-    C --> D["Stage 1: Call Notes<br/>GPT-4.1"]
-    D --> E["Structured Notes<br/>Timestamp + Tags"]
-
-    E --> F["Stage 2: AI Report<br/>GPT-4o"]
-    F --> G["Structured Report<br/>XML Schema"]
-
-    G --> H["Storage<br/>Supabase"]
-    G --> I["UI / Dashboard"]
-    G --> J["Export<br/>Analytics"]
 System Flow
 
 Call Input → Transcription → Call Notes → AI Report → Output
